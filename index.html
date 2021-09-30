@@ -1,0 +1,26 @@
+<html>
+<head>
+    <link href="./src/style.css" rel="stylesheet">
+    <script>window.$ = window.jQuery = require('./src/jquery.min.js'); </script>
+    <script src="./src/jquery.loading.min.js"></script>
+</head>
+<body>
+<h1 class="tc pd10">텍스트 파일 자르기</h1>
+<div class="btnArea tc">
+<button type="button" id="reloadBtn" class="snip1535">목록갱신</button>
+</div>
+<div class="selectArea tc">
+<select id="filelists"></select>
+</div>
+<div class="fileInfoArea pd10">
+    <div class="pdt5">선택된파일명 : <span id="selectFileName"></span></div>
+    <div class="pdt5">선택된파일용량 : <span id="selectFileSize"></span></div>
+    <div class="pdt5">파일 LINES : <span id="selectFileLineNum"></span></div>
+    <div class="pdt5">나눌 LINES : <input type="number" id="chunkLine" value="8000"></div>
+    <div class="pdt5">나눠지는 파일 갯수: <span id="selectSplitFileCount"></span></div>
+    <div class="pdt5 tc"><button type="button" id="createFilesBtn" class="snip1535">생성하기</button></div>
+</div>
+<script src="src/app.js"></script>
+</body>
+
+</html>
