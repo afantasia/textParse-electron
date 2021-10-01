@@ -52,8 +52,6 @@ ipcRenderer.on("returnData",function(event,params){
         $("#selectFileName").text(data.fileName);
         $("#selectFileSize").text(data.fileSize);
         $("#selectFileLineNum").text(data.lineNum);
-        console.log(data);
-        console.log(data.minChunkLine);
         $("#chunkLine").attr("minValue",data.minChunkLine);
         lineCalc();
     }else if(params.pType=='createComp'){

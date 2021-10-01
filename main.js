@@ -1,9 +1,10 @@
 const {app, BrowserWindow, ipcMain } = require('electron')
 const fs=require("fs");
 const path=require("path");
-const rmdir=require("rimraf");
 let win;
-
+const PRODUCT_TYPE="STAGE";//.env 파일 로드는 차후에 확인하는걸로 하고 1차적으로만 처리할수있게 작업 #DEVEL 일경우 개발자도구를 활용할수있음
+var rootPath = require('electron-root-path').rootPath;
+if(!PRODUCT_TYPE){rootPath+="/../";}
 function deleteFolderRecursive(path) {
   var files = [];
   if( fs.existsSync(path) ) {
@@ -44,16 +45,14 @@ Object.defineProperty(Array.prototype, 'chunk_inefficient', {
     );
   }
 });
-
-
 function createWindow() {
   win = new BrowserWindow({
-    width: 300,
-    height: 480,
+    width: PRODUCT_TYPE=="DEVEL" ? 1300 : 300,
+    height: PRODUCT_TYPE=="DEVEL" ? 1480 : 480,
     webPreferences: {
       nodeIntegration: true
     },
-    resizable: false,
+    resizable: PRODUCT_TYPE=="DEVEL" ? true : false,
     autoHideMenuBar: false,
   })
   win.loadURL(`file://${__dirname}/index.html`)
@@ -61,37 +60,44 @@ function createWindow() {
     app.quit();
   })
 }
-
+function sendFrontData(params){
+  params.path=rootPath;
+  win.webContents.send('returnData',params);
+}
 //렌더러프로세스에서 보내는 메시지 처리
 ipcMain.on('toggle-debug', (event, arg)=> {
   //디버그 툴 토글(on/off)
-  //win.webContents.toggleDevTools()
+  if(PRODUCT_TYPE=="DEVEL"){
+    win.webContents.toggleDevTools()
+  }
 });
 ipcMain.on('refresh', (event, arg)=> {
   //페이지 새로고침은 남겨둔다.
   win.reload();
 });
 ipcMain.on('reloadFile', (event, params)=> {
-  var Lists=fs.readdirSync("./").filter(el=>path.extname(el).toLowerCase()=='.txt');
-  win.webContents.send('returnData',{'pType':"reloadFile",'Lists':Lists});
+  var Lists=fs.readdirSync(rootPath+"/").filter(el=>path.extname(el).toLowerCase()=='.txt');
+  sendFrontData({'pType':"reloadFile",'Lists':Lists})
+  //{'pType':"createComp",'data':data}
 });
 ipcMain.on('fileSelect', (event, params)=> {
-  const fileInfo=fs.readFileSync("./"+params.fileName);
+  const fileInfo=fs.readFileSync(rootPath+"/"+params.fileName);
   const data={
     'fileName':params.fileName,
     'fileSize':formatByteSizeString(fileInfo.byteLength),
     'minChunkLine':Math.ceil((fileInfo.toString().split(/\r?\n/).length) / 40),//파일은 100개 이상 생성되지 않게 해야한다.
     'lineNum':fileInfo.toString().split(/\r?\n/).length,
   };
-  win.webContents.send('returnData',{'pType':"fileSelect",'data':data});
+
+  sendFrontData({'pType':"fileSelect",'data':data})
 });
 ipcMain.on('chunkFile', (event, params)=> {
-  const fileInfo=fs.readFileSync("./"+params.fileName);
+  const fileInfo=fs.readFileSync(rootPath+"/"+params.fileName);
   const fileAr=fileInfo.toString().split(/\r?\n/);
   const chunkAr=fileAr.chunk_inefficient(params.chunkLine);
-  const prefix=path.parse("./"+params.fileName).name;
-  const ext=path.parse("./"+params.fileName).ext;
-  const dirPath="./"+prefix;
+  const prefix=path.parse(rootPath+"/"+params.fileName).name;
+  const ext=path.parse(rootPath+"/"+params.fileName).ext;
+  const dirPath=rootPath+"/"+prefix;
   const fillContent= {};
   const fillSize=chunkAr.length.toString().length+1;
 
@@ -110,7 +116,7 @@ ipcMain.on('chunkFile', (event, params)=> {
     'chunkAr':fillContent,
     'fillContent':fillContent,
   };
-  win.webContents.send('returnData',{'pType':"createComp",'data':data});
+  returnData({'pType':"createComp",'data':data})
 });
 
 app.on('ready', createWindow);
